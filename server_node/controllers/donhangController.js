@@ -185,9 +185,65 @@ const layDonHangTheoEmail = async (req, res) => {
   }
 };
 
+// Cập nhật đơn hàng
+const capNhatDonHang = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ho_ten, email, status, ghi_chu } = req.body;
+
+    const donHang = await DonHangModel.findByPk(id);
+    if (!donHang) {
+      return res.status(404).json({ thong_bao: "Không tìm thấy đơn hàng!" });
+    }
+
+    donHang.ho_ten = ho_ten || donHang.ho_ten;
+    donHang.email = email || donHang.email;
+    donHang.status = status !== undefined ? status : donHang.status;
+    donHang.ghi_chu = ghi_chu || donHang.ghi_chu;
+
+    await donHang.save();
+    res.status(200).json({
+      thanh_cong: true,
+      thong_bao: "Cập nhật đơn hàng thành công!",
+      data: donHang,
+    });
+  } catch (error) {
+    console.error("Lỗi cập nhật đơn hàng:", error);
+    res.status(500).json({ thong_bao: "Có lỗi xảy ra!" });
+  }
+};
+
+// Xóa đơn hàng
+const xoaDonHang = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const donHang = await DonHangModel.findByPk(id);
+    if (!donHang) {
+      return res.status(404).json({ thong_bao: "Không tìm thấy đơn hàng!" });
+    }
+
+    // Xóa chi tiết đơn hàng trước
+    await DonHangChiTietModel.destroy({ where: { id_dh: id } });
+
+    // Xóa đơn hàng
+    await donHang.destroy();
+
+    res.status(200).json({
+      thanh_cong: true,
+      thong_bao: "Xóa đơn hàng thành công!",
+    });
+  } catch (error) {
+    console.error("Lỗi xóa đơn hàng:", error);
+    res.status(500).json({ thong_bao: "Có lỗi xảy ra!" });
+  }
+};
+
 module.exports = {
   luuDonHang,
   layDanhSachDonHang,
   layChiTietDonHang,
   layDonHangTheoEmail,
+  capNhatDonHang,
+  xoaDonHang,
 };
